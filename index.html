@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Workout">
+<title>Workout</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b0c;
+  --panel:#151517;
+  --panel-2:#1d1d20;
+  --line:#2a2a2e;
+  --text:#f4f4f1;
+  --muted:#8b8b90;
+  --volt:#d4ff3a;      /* primary action, progress */
+  --volt-ink:#0b0b0c;
+  --ember:#ff6a3d;     /* rest */
+  --skip:#3b3b40;
+  --display:"Bebas Neue",Impact,"Arial Narrow",sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg);color:var(--text);font:500 16px/1.45 var(--body);-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(120% 60% at 100% 0%,rgba(212,255,58,.07),transparent 60%);
+  background-attachment:fixed;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+a{color:var(--volt);text-decoration:none}
+.display{font-family:var(--display);font-weight:400;letter-spacing:.02em;line-height:.9;text-transform:uppercase}
+
+/* full-height screen; actions pinned to the bottom in thumb reach */
+.screen{min-height:100vh;min-height:100dvh;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
+  padding:calc(14px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))}
+.screen.enter{animation:in .28s ease-out}
+@keyframes in{from{transform:translateY(10px)}} /* transform only: content stays visible even if an animation stalls */
+.bar{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.icon{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:var(--panel);color:var(--muted)}
+.back{display:inline-flex;align-items:center;gap:4px;min-height:44px;color:var(--muted);font-weight:600;font-size:.95rem;margin-left:-6px;padding-right:8px}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.counter{font-family:var(--display);font-size:1.25rem;letter-spacing:.06em;color:var(--muted)}
+.counter b{color:var(--text);font-weight:400}
+
+/* ---------- home ---------- */
+.hero{margin:18px 0 6px}
+.hero h1{font-size:4.2rem;margin:0}
+.hero h1 span{color:var(--volt)}
+.group{display:flex;align-items:center;gap:10px;margin:26px 0 10px}
+.group::after{content:"";flex:1;height:1px;background:var(--line)}
+.card{position:relative;display:flex;align-items:center;gap:16px;width:100%;text-align:left;background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 18px 16px;margin-bottom:10px;overflow:hidden;transition:transform .12s,border-color .2s}
+.card:active{transform:scale(.985)}
+.card:hover{border-color:#3a3a40}
+.card .num{font-family:var(--display);font-size:2.6rem;line-height:1;color:var(--line);width:44px;flex:none;transition:color .2s}
+.card:hover .num{color:var(--volt)}
+.card h3{margin:0;font-size:2rem}
+.card p{margin:3px 0 0;font-size:.9rem;color:var(--muted)}
+.tags{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.tag{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:99px;background:var(--panel-2);color:var(--muted)}
+.tag.hi{color:var(--volt)}
+.card .go{margin-left:auto;flex:none;color:var(--muted)}
+
+/* ---------- mode select ---------- */
+.mode-head{margin:22px 0 22px}
+.mode-head h1{font-size:4rem;margin:6px 0 10px}
+.modes{display:grid;gap:12px}
+.mode{display:flex;flex-direction:column;align-items:flex-start;gap:14px;text-align:left;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r);padding:20px;transition:transform .12s,border-color .2s}
+.mode:active{transform:scale(.985)}
+.mode:hover{border-color:var(--volt)}
+.mode .glyph{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:var(--panel-2);color:var(--volt)}
+.mode h3{font-size:2.2rem;margin:0}
+.mode p{margin:4px 0 0;color:var(--muted);font-size:.95rem}
+
+/* ---------- exercise ---------- */
+.stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:14px 0;min-height:0}
+.frame{position:relative;width:100%;max-width:400px;aspect-ratio:1;border-radius:28px;background:#fff;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 30px 60px -20px rgba(0,0,0,.7)}
+.frame img{width:100%;height:100%;object-fit:contain;display:block}
+.frame.none{background:var(--panel);display:grid;place-items:center;color:var(--line)}
+.frame .badge{position:absolute;left:12px;top:12px;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:rgba(11,11,12,.82);color:#fff;padding:5px 9px;border-radius:99px}
+.exname{font-size:2.9rem;margin:6px 0 10px}
+.stats{display:flex;align-items:stretch;gap:8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 14px 9px}
+.stat .v{font-family:var(--display);font-size:1.9rem;line-height:1}
+.stat .v small{font-size:1.1rem;color:var(--muted)}
+.stat .k{font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.segs{display:flex;gap:5px;margin:14px 0 2px}
+.segs i{flex:1;height:5px;border-radius:99px;background:var(--panel-2);transition:background .25s}
+.segs i.done{background:var(--volt)}
+.segs i.skip{background:repeating-linear-gradient(-45deg,var(--skip) 0 4px,transparent 4px 8px);box-shadow:inset 0 0 0 1px var(--skip)}
+.segs i.now{background:var(--text)}
+.more{display:inline-flex;align-items:center;gap:6px;color:var(--text);font-weight:600;min-height:44px;font-size:.95rem}
+.more svg{transition:transform .2s;color:var(--volt)}
+.more[aria-expanded="true"] svg{transform:rotate(180deg)}
+.desc{display:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:6px}
+.desc.open{display:block;animation:in .2s ease-out}
+.desc ol{margin:0;padding:0;list-style:none;counter-reset:c}
+.desc li{counter-increment:c;display:flex;gap:10px;margin:0 0 8px;font-size:.95rem}
+.desc li::before{content:counter(c,decimal-leading-zero);font-family:var(--display);color:var(--volt);font-size:1.1rem;line-height:1.35}
+.desc .note{font-size:.85rem;color:var(--muted);margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+
+.actions{display:grid;grid-template-columns:1fr 1.9fr;gap:10px;margin-top:12px}
+.btn{min-height:76px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--display);font-size:1.7rem;letter-spacing:.06em;transition:transform .1s,filter .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--volt);color:var(--volt-ink);box-shadow:0 12px 30px -10px rgba(212,255,58,.45)}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--muted)}
+.btn.ghost:hover{color:var(--text);border-color:#3a3a40}
+.btn.wide{grid-column:1/-1}
+
+/* ---------- rest ---------- */
+.rest{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.rest .eyebrow{color:var(--ember)}
+.ring{position:relative;width:min(78vw,300px);aspect-ratio:1;margin:16px 0 18px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.ring .t{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:clamp(4.5rem,24vw,6.5rem);line-height:1;font-variant-numeric:tabular-nums}
+.ring #arc{filter:drop-shadow(0 0 10px rgba(255,106,61,.55));transition:stroke-dashoffset .2s linear}
+.adj{display:flex;gap:10px}
+.pill{min-height:48px;min-width:86px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-weight:700;font-size:.95rem}
+.pill:active{transform:scale(.96)}
+.upnext{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 16px;min-width:min(100%,320px)}
+.upnext .v{font-family:var(--display);font-size:1.6rem;line-height:1.05;margin-top:2px}
+
+/* ---------- finish ---------- */
+.fin{flex:1;display:flex;flex-direction:column;justify-content:center}
+.fin h1{font-size:5.2rem;margin:10px 0 18px}
+.fin h1 span{color:var(--volt)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid3 .stat{padding:14px}
+.grid3 .v{font-size:2.6rem}
+
+/* ---------- confirm sheet ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.sheet{width:100%;max-width:520px;background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:26px 26px 0 0;
+  padding:22px 18px calc(18px + env(safe-area-inset-bottom));animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px)}}
+.sheet h2{font-size:2.4rem;margin:0 0 4px}
+.sheet p{margin:0 0 16px;color:var(--muted)}
+.sheet .actions{grid-template-columns:1fr 1fr}
+.btn.danger{background:var(--ember);color:#160702}
+
+@media (max-width:370px){
+  .hero h1{font-size:3.5rem} .exname{font-size:2.4rem} .card h3{font-size:1.75rem} .card .num{width:34px;font-size:2.2rem}
+}
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* Demo GIFs come from ExerciseDB V1 (static.exercisedb.dev). IDs are hardcoded, so the app
+   never calls the rate-limited API. similar:true = closest movement the database has. */
+const GIF = id => `https://static.exercisedb.dev/media/${id}.gif`;
+
+/* reps: string shown to the user. hold: seconds (set button runs a hold timer). rest: seconds. */
+const X = {
+  // ----- Push
+  bench:{name:"Barbell bench press",sets:4,reps:"6–8",rest:150,gif:"EIeI8Vf",cues:["Shoulder blades back and down, slight arch, feet planted","Bar to lower chest, elbows ~45°","Press up and slightly back"]},
+  ohp:{name:"Seated dumbbell shoulder press",sets:3,reps:"8–10",rest:120,gif:"znQUdHY",cues:["Back against the pad, ribs down","Press up and slightly in; don't flare the lower back"]},
+  incline:{name:"Incline dumbbell press",sets:3,reps:"10",rest:90,gif:"ns0SIbU",cues:["Bench at 30°","Lower to upper chest with a full stretch, then press"]},
+  dip:{name:"Chest dips",sets:3,reps:"8–12",rest:90,gif:"9WTm7dq",cues:["Lean forward slightly, elbows out a little","Lower until shoulders are just below elbows","Use assisted dip or bench dips if needed"]},
+  crossover:{name:"Cable crossover",sets:3,reps:"12",rest:60,gif:"0CXGHya",cues:["Slight elbow bend, locked in","Hug a tree; squeeze 1 second at the middle"]},
+  lateral:{name:"Dumbbell lateral raise",sets:4,reps:"12–15",rest:60,gif:"DsgkuIt",cues:["Lead with the elbows to shoulder height","Slow on the way down; no swinging"]},
+  pushdown:{name:"Rope triceps pushdown",sets:3,reps:"12",rest:60,gif:"dU605di",cues:["Elbows pinned to sides","Spread the rope at the bottom"]},
+  ohtri:{name:"Overhead cable triceps extension",sets:3,reps:"12",rest:60,gif:"2IxROQ1",cues:["Face away from the cable, elbows by your ears","Full stretch behind the head, then lock out"]},
+  // ----- Pull
+  pullup:{name:"Pull-ups",sets:4,reps:"6–10",rest:120,gif:"lBDjFxJ",cues:["Start from a dead hang, shoulders pulled down first","Drive elbows to ribs; chest up to the bar","Use a band or assisted machine if you can't get 6"]},
+  bbrow:{name:"Barbell bent-over row",sets:4,reps:"8",rest:120,gif:"eZyBC3j",cues:["Hinge to ~45°, flat back, brace","Pull to lower ribs, squeeze shoulder blades"]},
+  pulldown:{name:"Neutral-grip lat pulldown",sets:3,reps:"10–12",rest:90,gif:"rkg41Fb",cues:["Lean back slightly, chest up","Pull handles to upper chest, elbows down and in"]},
+  cablerow:{name:"Seated cable row",sets:3,reps:"10–12",rest:90,gif:"fUBheHs",cues:["Tall chest, no rocking","Elbows back, shoulder blades together; full reach forward"]},
+  dbrow:{name:"Single-arm dumbbell row",sets:3,reps:"10 / side",rest:60,gif:"C0MA9bC",cues:["Hand and knee on bench, flat back","Pull the dumbbell to your hip, elbow close","Full stretch at the bottom without twisting"]},
+  shrug:{name:"Dumbbell shrug",sets:3,reps:"12",rest:60,gif:"NJzBsGJ",cues:["Straight up toward the ears, no rolling","1 second squeeze at the top"]},
+  inclinecurl:{name:"Incline dumbbell curl",sets:3,reps:"10",rest:60,gif:"ae9UoXQ",cues:["Bench at ~45°, arms hanging straight down","Keep elbows back as you curl; full stretch at the bottom"]},
+  revfly:{name:"Dumbbell reverse fly",sets:3,reps:"15",rest:60,gif:"EAs3xL9",cues:["Hinge forward, soft elbows","Lead with the elbows out to the sides; squeeze rear delts","Light weight, no swinging"]},
+  curl:{name:"Dumbbell biceps curl",sets:3,reps:"10",rest:60,gif:"NbVPDMW",cues:["Elbows still by your sides","Full stretch at the bottom, squeeze at the top"]},
+  hammer:{name:"Hammer curl",sets:3,reps:"12",rest:60,gif:"2NpxjC1",cues:["Neutral grip, thumbs up","Control the lowering"]},
+  // ----- Legs
+  squat:{name:"Barbell back squat",sets:4,reps:"6–8",rest:180,gif:"iYzB0Cz",cues:["Brace hard, ribs down","Knees track over toes; hit depth with a neutral pelvis","Drive up through mid-foot"]},
+  rdl:{name:"Romanian deadlift",sets:3,reps:"8",rest:150,gif:"wQ2c4XD",cues:["Soft knees, push hips back, bar close to legs","Stop at a hamstring stretch, before the back rounds","Squeeze glutes to stand; don't lean back at the top"]},
+  legpress:{name:"45° leg press",sets:3,reps:"10–12",rest:120,gif:"2Qh2J1e",cues:["Lower back stays on the pad. Stop before it peels off","Feet shoulder width, knees track over toes"]},
+  hipthrust:{name:"Barbell hip thrust / glute bridge",sets:3,reps:"10",rest:90,gif:"qKBpF7I",cues:["Upper back on a bench (or floor for a bridge), bar padded over hips","Tuck chin and ribs; drive hips up until torso is level","Squeeze glutes 1 second, don't arch the low back"]},
+  lunge:{name:"Walking lunge",sets:3,reps:"10 / side",rest:90,gif:"IZVHb27",cues:["Long step, torso tall","Back knee lightly touches/approaches floor","Push through front heel into the next step"]},
+  seatedcalf:{name:"Seated calf raise",sets:3,reps:"15",rest:45,gif:"r29jP7S",cues:["Bent knee targets the soleus","Full stretch at the bottom, pause at the top"]},
+  legcurl:{name:"Lying leg curl",sets:3,reps:"12",rest:60,gif:"17lJ1kr",cues:["Hips pressed into the pad","Slow 3 second lowering"]},
+  legext:{name:"Leg extension",sets:3,reps:"12–15",rest:60,gif:"my33uHU",cues:["Knee lined up with the machine pivot","Squeeze 1 second at the top, slow down"]},
+  calf:{name:"Standing calf raise",sets:4,reps:"12–15",rest:60,gif:"ykUOVze",cues:["Full stretch at the bottom, 1 second pause","Rise all the way onto the big toe"]},
+  // ----- Corrective: anterior pelvic tilt
+  hipflexor:{name:"Half-kneeling hip flexor stretch",sets:2,hold:30,side:true,rest:15,cues:["With posterior pelvic tilt: squeeze the back-leg glute and tuck the tailbone first","Then shift forward slightly; feel the front of the back hip","Ribs down, no lower-back arch"]},
+  n9090:{name:"90/90 hamstring bridge with hip lift",sets:3,hold:40,rest:20,cues:["Feet on a wall, hips and knees at 90°","Dig heels down into the wall; lift tailbone just off the floor","Nose inhale, long full exhale, ~5 breaths"]},
+  deadbug:{name:"Dead bug (flat back)",sets:3,reps:"8 / side",rest:30,gif:"iny3m5y",cues:["Low back pressed into the floor the whole time","Reach opposite arm and leg slowly; exhale as you extend"]},
+  glutebridge:{name:"Glute bridge with posterior tilt",sets:3,reps:"12",rest:30,gif:"D9qe7CM",cues:["Tuck the pelvis first, then drive through heels","Stop with hips in line with torso; 2 seconds squeeze at top"]},
+  rkc:{name:"RKC plank (posterior tilt)",sets:3,hold:20,rest:30,gif:"VBAWRPG",similar:true,cues:["Forearm plank, no weight needed","Tuck pelvis and squeeze glutes as hard as possible","Pull elbows toward toes to max out ab tension"]},
+  // ----- Corrective: rounded shoulders & posture
+  pecminor:{name:"Doorway pec minor stretch",sets:2,hold:30,side:true,rest:15,cues:["Forearm on door frame, elbow at or just above shoulder height","Step through gently; keep the shoulder down, away from the ear","Feel it high on the chest, not in the joint"]},
+  ytw:{name:"Prone Y-T-W raises",sets:2,reps:"8 each",rest:30,gif:"jgbvVJ0",similar:true,cues:["Face down on floor or incline bench, chin tucked","8 of each letter: Y overhead, T out to sides, W elbows bent","Thumbs up, shoulders away from ears; bodyweight or 1–2 kg"]},
+  wallangel:{name:"Wall angels",sets:2,reps:"10",rest:30,cues:["Low back, upper back and head on the wall, ribs down","Goalpost arms; slide up and down slowly","Only go as high as you can without arching"]},
+  facepull:{name:"Face pulls with external rotation",sets:3,reps:"15",rest:45,gif:"wqNPGCg",similar:true,cues:["Rope at face height, thumbs pointing back","Pull to forehead with elbows high and wide","Finish by rotating hands back, knuckles to ceiling; 1 second pause"]},
+  chintuck:{name:"Cervical retraction chin tucks",sets:2,reps:"10",rest:20,cues:["Glide the head straight back (double chin), eyes level","No nodding; hold 3 seconds each rep"]},
+  // ----- Corrective: asymmetry & unilateral balance
+  sideplank:{name:"Side plank with hip abduction",sets:3,reps:"10 / side",rest:30,gif:"WL4EmxJ",cues:["Elbow under shoulder, straight line head to heel","Lift top leg slightly behind midline without hips rolling back","Easier: bottom knee down"]},
+  slrdl:{name:"Single-leg Romanian deadlift",sets:3,reps:"8 / side",rest:45,gif:"gKozT8X",cues:["Hinge at the hip as the back leg reaches long","Hips square (back toes point down); weight close to leg","Weaker side first"]},
+  kneelrow:{name:"Half-kneeling single-arm cable row",sets:3,reps:"10 / side",rest:45,gif:"WrYPP2g",similar:true,cues:["Knee down on the working-arm side, glute squeezed","Row elbow to hip without twisting","Weaker side first"]},
+  suitcase:{name:"Suitcase carry",sets:3,hold:40,side:true,rest:45,gif:"qPEzJjA",similar:true,cues:["ONE heavy dumbbell (demo shows two)","Stand tall, shoulders level, don't lean away","Slow steps; switch hands halfway through each set"]},
+  bss:{name:"Bulgarian split squat",sets:3,reps:"8 / side",rest:60,gif:"qx4fgX7",cues:["Rear foot laces-down on bench","Front knee tracks over toes; drive through front heel","Weaker side first"]},
+};
+
+const ROUTINES = [
+  {id:"push",group:"Strength",name:"Push",focus:"Chest · Shoulders · Triceps",
+   list:["bench","ohp","incline","dip","crossover","lateral","pushdown","ohtri"]},
+  {id:"pull",group:"Strength",name:"Pull",focus:"Back · Rear delts · Biceps",
+   list:["pullup","bbrow","pulldown","dbrow","cablerow","revfly","shrug","curl","inclinecurl","hammer"]},
+  {id:"legs",group:"Strength",name:"Legs",focus:"Quads · Hamstrings · Glutes · Calves",
+   list:["squat","rdl","legpress","hipthrust","lunge","legcurl","legext","calf","seatedcalf"]},
+  {id:"apt",group:"Corrective",name:"Anterior Pelvic Tilt",focus:"Pelvis & Core",
+   list:["hipflexor","n9090","deadbug","glutebridge","rkc"]},
+  {id:"posture",group:"Corrective",name:"Rounded Shoulders & Posture",focus:"Upper Back & Chest",
+   list:["pecminor","ytw","wallangel","facepull","chintuck"]},
+  {id:"asym",group:"Corrective",name:"Asymmetry & Unilateral Balance",focus:"Hips & Spine",
+   list:["sideplank","slrdl","kneelrow","suitcase","bss"]},
+];
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mmss = s => { s=Math.max(0,Math.ceil(s)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; };
+const pad = n => String(n).padStart(2,"0");
+const R = id => ROUTINES.find(r => r.id===id);
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch{ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
+};
+const svg = (d, s=22, w=2.4) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I = {
+  right:  svg('<path d="m9 6 6 6-6 6"/>',20),
+  left:   svg('<path d="m15 6-6 6 6 6"/>',20),
+  close:  svg('<path d="M6 6l12 12M18 6 6 18"/>',20),
+  down:   svg('<path d="m6 9 6 6 6-6"/>',18),
+  plus:   svg('<path d="M12 5v14M5 12h14"/>',34,3),
+  list:   svg('<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',26),
+  shuffle:svg('<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',26),
+  figure: svg('<circle cx="12" cy="5" r="2"/><path d="M12 7v7m0 0-3 6m3-6 3 6M7 10h10"/>',64,1.6),
+};
+function minutes(r){
+  let s=0;
+  r.list.forEach(id => {
+    const e=X[id], sides=/\/ side|each/.test(e.reps||"") ? 2 : 1;
+    const work = e.hold ? e.hold*(e.side?2:1) : 45*sides;
+    s += e.sets*(work+e.rest) + 90; // + setup / warm-up sets / moving between exercises
+  });
+  return Math.round(s/60/5)*5;
+}
+const totalSets = r => r.list.reduce((a,id)=>a+X[id].sets,0);
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+
+/* ---------- state ----------
+   view: list | mode | ex | rest | done
+   S: { rid, order, ex, set, marks:{id:["done"|"skip"]}, started, restEnd, restTotal, finished }
+   S is saved so a reload or phone lock mid-workout resumes where you were. */
+let view="list", pickRid=null, descOpen=false, sheet=false;
+let S = store.get("session", null);
+if(S && R(S.rid)) view = S.finished ? "done" : S.restEnd ? "rest" : "ex"; else S=null;
+const save = () => store.set("session", S);
+
+/* ---------- screens ---------- */
+const screens = {
+  list(){
+    let n=0;
+    const groups=[...new Set(ROUTINES.map(r=>r.group))];
+    return `<div class="screen">
+      <header class="hero"><div class="eyebrow">Choose today's session</div><h1 class="display">Let's <span>train.</span></h1></header>
+      ${groups.map(g=>`
+        <div class="group eyebrow">${g}</div>
+        ${ROUTINES.filter(r=>r.group===g).map(r=>`
+          <button class="card" data-act="pick" data-id="${r.id}">
+            <span class="num">${pad(++n)}</span>
+            <div>
+              <h3 class="display">${esc(r.name)}</h3>
+              <p>${esc(r.focus)}</p>
+              <div class="tags"><span class="tag hi">~${minutes(r)} min</span><span class="tag">${r.list.length} exercises</span></div>
+            </div>
+            <span class="go">${I.right}</span>
+          </button>`).join("")}`).join("")}
+    </div>`;
+  },
+
+  mode(){
+    const r=R(pickRid);
+    return `<div class="screen">
+      <div class="bar"><button class="back" data-act="home">${I.left}Workouts</button></div>
+      <header class="mode-head">
+        <div class="eyebrow">${esc(r.group)} · ${esc(r.focus)}</div>
+        <h1 class="display">${esc(r.name)}</h1>
+        <div class="tags"><span class="tag hi">~${minutes(r)} min</span><span class="tag">${r.list.length} exercises</span><span class="tag">${totalSets(r)} sets</span></div>
+      </header>
+      <div class="modes">
+        <button class="mode" data-act="start" data-mode="structured">
+          <span class="glyph">${I.list}</span>
+          <div><h3 class="display">Structured</h3><p>The planned order: big lifts first, accessories after.</p></div>
+        </button>
+        <button class="mode" data-act="start" data-mode="random">
+          <span class="glyph">${I.shuffle}</span>
+          <div><h3 class="display">Random</h3><p>Same exercises, shuffled. Good when equipment is busy.</p></div>
+        </button>
+      </div>
+    </div>`;
+  },
+
+  ex(){
+    const id=S.order[S.ex], e=X[id], marks=S.marks[id]||[];
+    const amount = e.hold ? `${e.hold}<small>s</small>` : esc(e.reps).replace(/ \/ side| each/,"");
+    const unit = e.hold ? (e.side?"Hold / side":"Hold") : (/\/ side/.test(e.reps)?"Reps / side":/each/.test(e.reps)?"Reps each":"Reps");
+    const vid=`https://www.youtube.com/results?search_query=${encodeURIComponent(e.name+" form")}`;
+    const media = e.gif
+      ? `<div class="frame"><img src="${GIF(e.gif)}" alt="${esc(e.name)} demonstration" onerror="this.parentNode.classList.add('none');this.replaceWith(document.createRange().createContextualFragment(I.figure))">${e.similar?'<span class="badge">Similar demo</span>':""}</div>`
+      : `<div class="frame none">${I.figure}</div>`;
+    return `<div class="screen">
+      <div class="bar">
+        <button class="icon" data-act="quit" aria-label="End workout">${I.close}</button>
+        <span class="counter">Exercise <b>${pad(S.ex+1)}</b> / ${pad(S.order.length)}</span>
+      </div>
+      <div class="stage">${media}</div>
+      <h1 class="exname display">${esc(e.name)}</h1>
+      <div class="stats">
+        <div class="stat"><div class="v">${S.set+1}<small>/${e.sets}</small></div><div class="k">Set</div></div>
+        <div class="stat"><div class="v">${amount}</div><div class="k">${unit}</div></div>
+        <div class="stat"><div class="v">${mmss(e.rest)}</div><div class="k">Rest</div></div>
+      </div>
+      <div class="segs">${Array.from({length:e.sets},(_,i)=>`<i class="${marks[i]||(i===S.set?"now":"")}"></i>`).join("")}</div>
+      <button class="more" data-act="more" aria-expanded="${descOpen}">${descOpen?"Hide":"View more"} ${I.down}</button>
+      <div class="desc ${descOpen?"open":""}">
+        <ol>${e.cues.map(c=>`<li><span>${esc(c)}</span></li>`).join("")}</ol>
+        <p class="note">${e.gif?(e.similar?"Demo shows the closest movement available. Follow the cues. ":""):"No demo available. "}<a href="${vid}" target="_blank" rel="noopener">Watch a video ↗</a></p>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" data-act="skip">Skip</button>
+        <button class="btn primary" data-act="plus" aria-label="Finish set">${I.plus}</button>
+      </div>
+    </div>`;
+  },
+
+  rest(){
+    const e=X[S.order[S.ex]];
+    const next = S.set===0 ? e.name : `${e.name} · Set ${S.set+1}/${e.sets}`;
+    return `<div class="screen">
+      <div class="bar">
+        <button class="icon" data-act="quit" aria-label="End workout">${I.close}</button>
+        <span class="counter">Exercise <b>${pad(S.ex+1)}</b> / ${pad(S.order.length)}</span>
+      </div>
+      <div class="rest">
+        <div class="eyebrow">Recover</div>
+        <div class="ring">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="46" fill="none" stroke="var(--panel-2)" stroke-width="3.5"/>
+            <circle id="arc" cx="50" cy="50" r="46" fill="none" stroke="var(--ember)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="0"/>
+          </svg>
+          <div class="t" id="rnum">${mmss((S.restEnd-Date.now())/1000)}</div>
+        </div>
+        <div class="adj"><button class="pill" data-act="adj" data-v="-15">−15s</button><button class="pill" data-act="adj" data-v="15">+15s</button></div>
+        <div class="upnext"><div class="eyebrow">Up next</div><div class="v display">${esc(next)}</div></div>
+      </div>
+      <div class="actions"><button class="btn ghost wide" data-act="endrest" style="color:var(--text)">Skip rest</button></div>
+    </div>`;
+  },
+
+  done(){
+    const r=R(S.rid); let d=0,k=0;
+    Object.values(S.marks).forEach(a=>a.forEach(m=>{ if(m==="done")d++; if(m==="skip")k++; }));
+    const mins=Math.max(1,Math.round((Date.now()-S.started)/60000));
+    return `<div class="screen">
+      <div class="fin">
+        <div class="eyebrow">${esc(r.name)} · complete</div>
+        <h1 class="display">Done<span>.</span><br>Good work.</h1>
+        <div class="grid3">
+          <div class="stat"><div class="v">${d}</div><div class="k">Sets done</div></div>
+          <div class="stat"><div class="v">${k}</div><div class="k">Skipped</div></div>
+          <div class="stat"><div class="v">${mins}</div><div class="k">Minutes</div></div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn primary wide" data-act="finish">Back to workouts</button></div>
+    </div>`;
+  },
+};
+
+function sheetHTML(){
+  return `<div class="scrim" data-act="nosheet"><div class="sheet">
+    <h2 class="display">End workout?</h2>
+    <p>Sets you've finished so far are counted on the summary.</p>
+    <div class="actions"><button class="btn ghost" data-act="nosheet">Keep going</button><button class="btn danger" data-act="end">End</button></div>
+  </div></div>`;
+}
+
+function render(enter=false){
+  $("app").innerHTML = screens[view]() + (sheet ? sheetHTML() : "");
+  if(enter) $("app").firstElementChild.classList.add("enter"); // animate screen changes only, not re-renders or first load
+  if(view==="rest") drawRest();
+}
+function go(v){ view=v; descOpen=false; sheet=false; render(true); window.scrollTo(0,0); }
+
+/* ---------- workout flow ---------- */
+function start(mode){
+  const r=R(pickRid);
+  S={ rid:r.id, order: mode==="random" ? shuffle(r.list) : r.list.slice(), ex:0, set:0, marks:{}, started:Date.now() };
+  save(); unlockAudio(); keepAwake(); go("ex");
+}
+const mark = m => { const id=S.order[S.ex]; (S.marks[id] ||= [])[S.set]=m; };
+function advance(){ // move to the next set/exercise; false when the workout is over
+  if(S.set < X[S.order[S.ex]].sets-1){ S.set++; return true; }
+  if(S.ex < S.order.length-1){ S.ex++; S.set=0; return true; }
+  return false;
+}
+function plus(){
+  unlockAudio();
+  const rest=X[S.order[S.ex]].rest;
+  mark("done");
+  if(!advance()) return finish();
+  S.restTotal=rest; S.restEnd=Date.now()+rest*1000; save(); go("rest");
+}
+function skip(){
+  mark("skip");
+  if(!advance()) return finish();
+  save(); go("ex");
+}
+function endRest(){ S.restEnd=null; save(); go("ex"); }
+function finish(){ S.restEnd=null; S.finished=true; save(); go("done"); }
+
+/* ---------- rest timer ---------- */
+let actx=null, wake=null;
+function unlockAudio(){ try{ actx ||= new (window.AudioContext||window.webkitAudioContext)(); actx.resume?.(); }catch{} }
+function keepAwake(){ try{ navigator.wakeLock?.request("screen").then(l=>wake=l).catch(()=>{}); }catch{} }
+function beep(){
+  try{
+    unlockAudio();
+    [0,1,2].forEach(i=>{
+      const o=actx.createOscillator(), g=actx.createGain(), t=actx.currentTime+i*.22;
+      o.frequency.value = i===2 ? 1100 : 880; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.35,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+.16);
+      o.start(t); o.stop(t+.18);
+    });
+  }catch{}
+  try{ navigator.vibrate?.([200,100,200]); }catch{}
+}
+function drawRest(){
+  if(view!=="rest" || !S?.restEnd) return;
+  const left=(S.restEnd-Date.now())/1000;
+  const n=$("rnum"), arc=$("arc");
+  if(n) n.textContent=mmss(left);
+  if(arc) arc.setAttribute("stroke-dashoffset",(289*(1-Math.max(0,left)/S.restTotal)).toFixed(1));
+  if(left<=0){ beep(); endRest(); }
+}
+setInterval(drawRest, 200);
+
+/* ---------- events ---------- */
+const actions = {
+  pick:   b => { pickRid=b.dataset.id; go("mode"); },
+  home:   () => go("list"),
+  start:  b => start(b.dataset.mode),
+  more:   () => { descOpen=!descOpen; render(); },
+  plus, skip,
+  adj:    b => { const v=+b.dataset.v; S.restEnd+=v*1000; if(v>0) S.restTotal+=v; save(); drawRest(); },
+  endrest:endRest,
+  quit:   () => { sheet=true; render(); },
+  nosheet:() => { sheet=false; render(); },
+  end:    () => finish(),
+  finish: () => { S=null; save(); try{ wake?.release(); }catch{} go("list"); },
+};
+document.addEventListener("click", ev => {
+  const b=ev.target.closest("[data-act]");
+  if(!b || !actions[b.dataset.act]) return;
+  if(b.classList.contains("scrim") && ev.target!==b) return; // taps inside the sheet don't dismiss it
+  actions[b.dataset.act](b);
+});
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState==="visible"){ drawRest(); if(S && !S.finished) keepAwake(); }
+});
+
+render();
+
+// Service worker: enables "Install app" on Android and an offline fallback. Only runs over http(s).
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("/sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
